@@ -10,13 +10,38 @@ from app.main import create_app
 
 
 @pytest.fixture
-def client(tmp_path) -> Generator[TestClient, None, None]:
+def unauthenticated_client(tmp_path) -> Generator[TestClient, None, None]:
     """Create an isolated API client backed by a temporary SQLite database."""
 
     database_file = tmp_path / "test-taskflow.db"
-    settings = Settings(database_url=f"sqlite:///{database_file}")
+    settings = Settings(
+        database_url=f"sqlite:///{database_file}",
+        secret_key="test-secret-key-that-is-not-used-in-production",
+    )
     with TestClient(create_app(settings)) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def client(unauthenticated_client) -> TestClient:
+    """Return a client authenticated as the default test user."""
+
+    registration = {
+        "email": "philip@example.com",
+        "full_name": "Philip Okeke",
+        "password": "secure-password-123",
+    }
+    response = unauthenticated_client.post("/api/v1/auth/register", json=registration)
+    assert response.status_code == 201
+
+    response = unauthenticated_client.post(
+        "/api/v1/auth/token",
+        data={"username": registration["email"], "password": registration["password"]},
+    )
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    unauthenticated_client.headers.update({"Authorization": f"Bearer {token}"})
+    return unauthenticated_client
 
 
 @pytest.fixture

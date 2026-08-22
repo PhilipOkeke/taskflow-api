@@ -1,0 +1,47 @@
+name: Bug report
+description: Report reproducible incorrect behaviour
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for helping improve TaskFlow.
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Send...
+        2. Observe...
+    validations:
+      required: true
+  - type: input
+    id: endpoint
+    attributes:
+      label: Endpoint or component
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Python version, operating system, database, and relevant configuration.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I removed secrets and personal data from this report.
+          required: true
+        - label: I searched for an existing issue.
+          required: true

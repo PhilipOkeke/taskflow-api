@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlmodel import SQLModel
 
+from app.auth_routes import router as auth_router
 from app.config import Settings, get_settings
 from app.database import build_engine
 from app.routes import router as task_router
@@ -26,10 +27,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application = FastAPI(
         title=active_settings.app_name,
         version=active_settings.app_version,
-        description="A production-minded task management REST API portfolio project.",
+        description=(
+            "A multi-user task management API with JWT authentication, "
+            "database persistence, automated tests, and continuous integration."
+        ),
         lifespan=lifespan,
     )
     application.state.engine = engine
+    application.state.settings = active_settings
+    application.include_router(auth_router)
     application.include_router(task_router)
 
     @application.get("/", tags=["service"])

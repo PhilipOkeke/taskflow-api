@@ -140,6 +140,74 @@ taskflow-api/
 │   ├── database.py            # Engine and session management
 │   ├── main.py                # Application factory and service endpoints
 │   ├── models.py              # Database and request/response models
+
+
+## Authentication
+
+Task endpoints require a bearer token.
+
+1. Register an account:
+
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "developer@example.com",
+  "full_name": "Example Developer",
+  "password": "a-secure-password"
+}
+```
+
+2. Request an access token by sending the email as the OAuth2 `username` and the password to `POST /api/v1/auth/token`.
+3. Select **Authorize** in Swagger UI and enter the returned bearer token.
+4. Use the protected task endpoints. Each user can access only their own tasks.
+
+The API also provides `GET /api/v1/auth/me` for the authenticated user's profile.
+
+## PostgreSQL and migrations
+
+Local tests continue to use isolated SQLite databases. Docker and hosted environments use PostgreSQL.
+
+```bash
+docker compose up --build
+```
+
+The container runs pending migrations before starting the API. To run migrations manually:
+
+```bash
+alembic upgrade head
+```
+
+Create future migrations with:
+
+```bash
+alembic revision --autogenerate -m "describe the schema change"
+```
+
+## Environment variables
+
+Copy `.env.example` and supply environment-specific values. Never commit the real `SECRET_KEY`.
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | SQLite or PostgreSQL SQLAlchemy connection URL |
+| `SECRET_KEY` | Secret used to sign JWT access tokens |
+| `ACCESS_TOKEN_MINUTES` | Access-token lifetime |
+| `APP_NAME` | Display name shown in OpenAPI |
+| `APP_VERSION` | Version reported by the service |
+
+## Deploy to Render
+
+The repository includes `render.yaml` for a Blueprint deployment containing:
+
+- A Docker-based FastAPI web service
+- A managed PostgreSQL database
+- A generated JWT signing secret
+- Automatic deployment from GitHub
+- A `/health` health check
+
+In Render, create a new Blueprint, connect this GitHub repository, and select `render.yaml`. Free Render services may sleep during inactivity, and free databases are intended for portfolio or evaluation use rather than production.
 │   └── routes.py              # Versioned task endpoints
 ├── tests/                     # End-to-end API tests
 ├── Dockerfile

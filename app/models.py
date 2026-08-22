@@ -1,13 +1,14 @@
-"""Database and API models for tasks."""
+"""Database and API models for users and tasks."""
 
 from datetime import UTC, datetime
 from enum import StrEnum
 
+from pydantic import EmailStr
 from sqlmodel import Field, SQLModel
 
 
 def utc_now() -> datetime:
-    """Return a timezone-naive UTC timestamp for SQLite compatibility."""
+    """Return a timezone-naive UTC timestamp for database compatibility."""
 
     return datetime.now(UTC).replace(tzinfo=None)
 
@@ -28,6 +29,44 @@ class TaskPriority(StrEnum):
     HIGH = "high"
 
 
+class User(SQLModel, table=True):
+    """Persisted application user."""
+
+    __tablename__ = "users"
+
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, index=True, max_length=320)
+    full_name: str = Field(min_length=2, max_length=120)
+    password_hash: str
+    is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=utc_now, nullable=False)
+
+
+class UserCreate(SQLModel):
+    """Payload accepted when registering a user."""
+
+    email: EmailStr
+    full_name: str = Field(min_length=2, max_length=120)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class UserPublic(SQLModel):
+    """Safe user representation returned to clients."""
+
+    id: int
+    email: EmailStr
+    full_name: str
+    is_active: bool
+    created_at: datetime
+
+
+class Token(SQLModel):
+    """OAuth2 bearer token response."""
+
+    access_token: str
+    token_type: str = "bearer"
+
+
 class TaskBase(SQLModel):
     """Fields shared by task input and output models."""
 
@@ -44,6 +83,7 @@ class Task(TaskBase, table=True):
     __tablename__ = "tasks"
 
     id: int | None = Field(default=None, primary_key=True)
+    owner_id: int = Field(foreign_key="users.id", index=True)
     created_at: datetime = Field(default_factory=utc_now, nullable=False)
     updated_at: datetime = Field(default_factory=utc_now, nullable=False)
 
@@ -66,6 +106,7 @@ class TaskPublic(TaskBase):
     """Task representation returned to API clients."""
 
     id: int
+    owner_id: int
     created_at: datetime
     updated_at: datetime
 

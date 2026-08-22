@@ -1,15 +1,45 @@
-"""Task persistence operations."""
+"""Persistence operations for users and tasks."""
 
 from sqlalchemy import func, or_
 from sqlmodel import Session, select
 
-from app.models import Task, TaskCreate, TaskPriority, TaskStatus, TaskUpdate, utc_now
+from app.auth import hash_password
+from app.models import (
+    Task,
+    TaskCreate,
+    TaskPriority,
+    TaskStatus,
+    TaskUpdate,
+    User,
+    UserCreate,
+    utc_now,
+)
 
 
-def create_task(session: Session, task_input: TaskCreate) -> Task:
-    """Persist and return a new task."""
+def get_user_by_email(session: Session, email: str) -> User | None:
+    """Return a user by normalized email."""
 
-    task = Task.model_validate(task_input)
+    return session.exec(select(User).where(User.email == email.strip().lower())).first()
+
+
+def create_user(session: Session, user_input: UserCreate) -> User:
+    """Persist a user with a securely hashed password."""
+
+    user = User(
+        email=str(user_input.email).strip().lower(),
+        full_name=user_input.full_name.strip(),
+        password_hash=hash_password(user_input.password),
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+def create_task(session: Session, task_input: TaskCreate, owner_id: int) -> Task:
+    """Persist and return a task owned by the authenticated user."""
+
+    task = Task.model_validate(task_input, update={"owner_id": owner_id})
     session.add(task)
     session.commit()
     session.refresh(task)
@@ -19,15 +49,16 @@ def create_task(session: Session, task_input: TaskCreate) -> Task:
 def list_tasks(
     session: Session,
     *,
+    owner_id: int,
     status: TaskStatus | None,
     priority: TaskPriority | None,
     search: str | None,
     limit: int,
     offset: int,
 ) -> tuple[list[Task], int]:
-    """Return filtered, paginated tasks and the full match count."""
+    """Return filtered, paginated tasks belonging to one user."""
 
-    conditions = []
+    conditions = [Task.owner_id == owner_id]
     if status is not None:
         conditions.append(Task.status == status)
     if priority is not None:
@@ -48,10 +79,10 @@ def list_tasks(
     return tasks, total
 
 
-def get_task(session: Session, task_id: int) -> Task | None:
-    """Return a task by ID when it exists."""
+def get_task(session: Session, task_id: int, owner_id: int) -> Task | None:
+    """Return an owned task by ID when it exists."""
 
-    return session.get(Task, task_id)
+    return session.exec(select(Task).where(Task.id == task_id, Task.owner_id == owner_id)).first()
 
 
 def update_task(session: Session, task: Task, task_input: TaskUpdate) -> Task:
