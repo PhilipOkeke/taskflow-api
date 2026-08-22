@@ -4,10 +4,26 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: sqlite:////data/taskflow.db
+      DATABASE_URL: postgresql+psycopg://taskflow:taskflow@database:5432/taskflow
+      SECRET_KEY: local-development-secret-change-before-deployment
+      ACCESS_TOKEN_MINUTES: 30
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: taskflow
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow
     volumes:
-      - taskflow_data:/data
+      - taskflow_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d taskflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  taskflow_data:
-
+  taskflow_postgres:
