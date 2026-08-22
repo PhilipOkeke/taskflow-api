@@ -8,6 +8,17 @@ A production-minded task management REST API built with Python, FastAPI, SQLMode
 
 TaskFlow was created as a focused backend portfolio project. It shows how a small API can still use professional engineering practices: a clear project structure, typed models, request-scoped database sessions, consistent HTTP responses, automated quality checks, and documentation that lets another developer run the service quickly.
 
+
+## Live Deployment
+
+- **Live API:** https://taskflow-api-2iyx.onrender.com
+- **Interactive Swagger docs:** https://taskflow-api-2iyx.onrender.com/docs
+- **Health check:** https://taskflow-api-2iyx.onrender.com/health
+- **Hosting:** Render Free Web Service
+- **Database:** Render PostgreSQL with Alembic migrations
+
+> The free web service can take about a minute to wake after inactivity. The free PostgreSQL database is intended for portfolio demonstration and expires on September 21, 2026.
+
 ## Features
 
 - Create, read, update, and delete tasks
