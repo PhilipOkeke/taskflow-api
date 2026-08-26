@@ -1,8 +1,8 @@
 # TaskFlow API
 
-[![CI](https://github.com/philip-okeke/taskflow-api/actions/workflows/ci.yml/badge.svg)](https://github.com/philip-okeke/taskflow-api/actions/workflows/ci.yml)
+[![CI](https://github.com/SenseiPhiL/taskflow-api/actions/workflows/ci.yml/badge.svg)](https://github.com/SenseiPhiL/taskflow-api/actions/workflows/ci.yml)
 
-A production-minded task management REST API built with Python, FastAPI, SQLModel, and SQLite. The project demonstrates backend development, database persistence, input validation, filtering, pagination, automated testing, containerization, and continuous integration.
+A task management REST API portfolio project built with Python, FastAPI, SQLModel, PostgreSQL, and SQLite. The project demonstrates backend development, database persistence, input validation, filtering, pagination, automated testing, containerization, and continuous integration.
 
 ## Why This Project
 
@@ -39,7 +39,10 @@ flowchart LR
 - Filter by status and priority
 - Paginate task collections
 - Validate request bodies and query parameters
-- Persist data in SQLite through SQLModel
+- Register users and authenticate requests with JWT access tokens
+- Restrict task access to the authenticated owner
+- Persist data through SQLModel using PostgreSQL or SQLite
+- Manage database schema changes with Alembic
 - Generate interactive OpenAPI documentation automatically
 - Run API tests and coverage checks with PyTest
 - Enforce linting and formatting with Ruff
@@ -53,7 +56,9 @@ flowchart LR
 | Language | Python 3.12 |
 | API framework | FastAPI |
 | Data validation | Pydantic through SQLModel |
-| Database and ORM | SQLite and SQLModel/SQLAlchemy |
+| Database and ORM | PostgreSQL, SQLite, and SQLModel/SQLAlchemy |
+| Authentication | JWT access tokens and password hashing |
+| Migrations | Alembic |
 | Testing | PyTest, FastAPI TestClient, pytest-cov |
 | Code quality | Ruff |
 | Containerization | Docker and Docker Compose |
@@ -65,6 +70,9 @@ flowchart LR
 | --- | --- | --- |
 | `GET` | `/` | Service information |
 | `GET` | `/health` | Health check |
+| `POST` | `/api/v1/auth/register` | Register an account |
+| `POST` | `/api/v1/auth/token` | Obtain an access token |
+| `GET` | `/api/v1/auth/me` | Retrieve the authenticated user |
 | `POST` | `/api/v1/tasks` | Create a task |
 | `GET` | `/api/v1/tasks` | List, filter, search, and paginate tasks |
 | `GET` | `/api/v1/tasks/{task_id}` | Retrieve one task |
@@ -107,7 +115,7 @@ uvicorn app.main:app --reload
 
 ## Try the API
 
-The easiest option is to open <http://127.0.0.1:8000/docs>, expand an endpoint, click **Try it out**, enter the request data, and click **Execute**.
+First follow [Authentication](#authentication) to register and sign in. Then open <http://127.0.0.1:8000/docs>, authorize your session, expand a task endpoint, click **Try it out**, enter the request data, and click **Execute**.
 
 Example request body for `POST /api/v1/tasks`:
 
@@ -120,10 +128,11 @@ Example request body for `POST /api/v1/tasks`:
 }
 ```
 
-Example using `curl`:
+Example using `curl` (set `ACCESS_TOKEN` to the token returned by the login endpoint):
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/tasks" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Prepare portfolio project","status":"in_progress","priority":"high"}'
 ```
@@ -150,7 +159,7 @@ The test configuration requires at least 90% application-code coverage.
 docker compose up --build
 ```
 
-The API will be available at <http://127.0.0.1:8000/docs>. Docker Compose stores the SQLite database in a named volume so the data survives container restarts.
+The API will be available at <http://127.0.0.1:8000/docs>. Docker Compose runs PostgreSQL and stores its data in a named volume. The supplied credentials and signing key are for local development only.
 
 ## Project Structure
 
@@ -163,7 +172,13 @@ taskflow-api/
 │   ├── database.py            # Engine and session management
 │   ├── main.py                # Application factory and service endpoints
 │   ├── models.py              # Database and request/response models
-
+│   └── routes.py              # Versioned task endpoints
+├── tests/                     # End-to-end API tests
+├── Dockerfile
+├── docker-compose.yml
+├── pyproject.toml
+└── README.md
+```
 
 ## Authentication
 
@@ -183,7 +198,7 @@ Content-Type: application/json
 ```
 
 2. Request an access token by sending the email as the OAuth2 `username` and the password to `POST /api/v1/auth/token`.
-3. Select **Authorize** in Swagger UI and enter the returned bearer token.
+3. In Swagger UI, select **Authorize** and sign in with your registered email as the username and your password. For HTTP clients, send the returned token as `Authorization: Bearer <access_token>`.
 4. Use the protected task endpoints. Each user can access only their own tasks.
 
 The API also provides `GET /api/v1/auth/me` for the authenticated user's profile.
@@ -231,13 +246,6 @@ The repository includes `render.yaml` for a Blueprint deployment containing:
 - A `/health` health check
 
 In Render, create a new Blueprint, connect this GitHub repository, and select `render.yaml`. Free Render services may sleep during inactivity, and free databases are intended for portfolio or evaluation use rather than production.
-│   └── routes.py              # Versioned task endpoints
-├── tests/                     # End-to-end API tests
-├── Dockerfile
-├── docker-compose.yml
-├── pyproject.toml
-└── README.md
-```
 
 ## Engineering Decisions
 
@@ -250,12 +258,9 @@ In Render, create a new Blueprint, connect this GitHub repository, and select `r
 
 ## Possible Next Improvements
 
-- PostgreSQL support and database migrations with Alembic
-- User registration and JWT authentication
-- Task ownership and role-based permissions
+- Role-based permissions beyond per-user task ownership
 - Structured application logging
 - Rate limiting and production monitoring
-- Cloud deployment with a managed database
 
 ## Author
 
@@ -266,4 +271,3 @@ In Render, create a new Blueprint, connect this GitHub repository, and select `r
 ## License
 
 This project is available under the MIT License.
-
