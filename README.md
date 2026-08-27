@@ -1,6 +1,6 @@
 # TaskFlow API
 
-[![CI](https://github.com/SenseiPhiL/taskflow-api/actions/workflows/ci.yml/badge.svg)](https://github.com/SenseiPhiL/taskflow-api/actions/workflows/ci.yml)
+[![CI](https://github.com/PhilipOkeke/taskflow-backend-api/actions/workflows/ci.yml/badge.svg)](https://github.com/PhilipOkeke/taskflow-backend-api/actions/workflows/ci.yml)
 
 A task management REST API portfolio project built with Python, FastAPI, SQLModel, PostgreSQL, and SQLite. The project demonstrates backend development, database persistence, input validation, filtering, pagination, automated testing, containerization, and continuous integration.
 
@@ -164,7 +164,7 @@ The API will be available at <http://127.0.0.1:8000/docs>. Docker Compose runs P
 ## Project Structure
 
 ```text
-taskflow-api/
+taskflow-backend-api/
 ├── .github/workflows/ci.yml   # Automated linting, formatting, and tests
 ├── app/
 │   ├── config.py              # Environment-based configuration
